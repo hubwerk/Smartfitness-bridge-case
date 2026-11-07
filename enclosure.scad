@@ -9,6 +9,7 @@
 // Alle Maße in mm. VOR DEM DRUCK nachmessen und unten anpassen!
 // part = "box" | "lid" | "btn_b" | "btn_r" | "logo_inlay" | "assembly"
 part = "assembly";
+show_electronics = false;  // Board/Sensor-Platzhalter in der Baugruppe anzeigen
 
 include <logo_smartfitness.scad>
 
@@ -29,6 +30,7 @@ esp_pin_keepout = 4.2;
 
 usb_y   = [-6.5, 6.5];  // USB-C Mitte relativ zur Platinenmitte
 usb_cw  = 8.94; usb_ch = 3.26; usb_ov = 0.8; usb_clr = 0.3;
+usb_chamfer = 1.0;   // 45°-Fase außen um die USB-Öffnungen (Einführhilfe, Platz für dicke Stecker)
 
 // Taster / LEDs: [x ab USB-Platinenkante, y ab Platinenmitte (+ = Sensorseite)]
 buttons  = [[11, -8], [11, 8]];
@@ -177,6 +179,12 @@ module usb_cutouts() {
         translate([-usb_wall - 1, esp_c + dy, esp_under + esp_t + usb_ch/2])
         rotate([0, 90, 0]) rotate([0, 0, 90]) linear_extrude(usb_wall + 1.1)
             stadium(usb_cw + 2*usb_clr, usb_ch + 2*usb_clr);
+    for (dy = usb_y)
+        translate([-usb_wall - 0.01, esp_c + dy, esp_under + esp_t + usb_ch/2])
+        rotate([0, 90, 0]) rotate([0, 0, 90]) hull() {
+            linear_extrude(0.01) offset(r = usb_chamfer + 0.01) stadium(usb_cw + 2*usb_clr, usb_ch + 2*usb_clr);
+            translate([0, 0, usb_chamfer + 0.01]) linear_extrude(0.01) stadium(usb_cw + 2*usb_clr, usb_ch + 2*usb_clr);
+        }
 }
 
 module tof_mount() {
@@ -265,8 +273,9 @@ else if (part == "assembly") color(anthracite) to_bed() {
     lid_assembled();
     for (i = [0:len(buttons) - 1])
         translate([bx(buttons[i]), by(buttons[i]), top_z + btn_proud]) rotate([180, 0, 0]) button(btn_labels[i]);
+    if (show_electronics) {
     translate([board_x0, esp_y0, esp_under]) cube([esp_l, esp_w, esp_t]);
-    for (dy = usb_y) 
+    for (dy = usb_y)
         translate([board_x0 - usb_ov, esp_c + dy - usb_cw/2, esp_under + esp_t]) cube([7.3, usb_cw, usb_ch]);
     {
         translate([sx0 + tof_strip, y_b, sz0]) cube([tof_wid - tof_strip, tof_t, tof_len]);
@@ -276,4 +285,5 @@ else if (part == "assembly") color(anthracite) to_bed() {
     // Dupont-Stecker des Sensors (Platzhalter)
     translate([sx0 - tof_plug_len, y_b - tof_plug, sz0 + tof_strip_v[0]])
         cube([tof_plug_len, tof_plug - 0.5, tof_strip_v[1] - tof_strip_v[0]]);
+    }
 }

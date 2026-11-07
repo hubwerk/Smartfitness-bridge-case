@@ -21,7 +21,7 @@ Outer dimensions: **71.2 × 38.9 × 34 mm**
 ## Design
 
 - The sensor sits upright in the middle of the long side, its lens cap flush with the outside. Use a **right-angle pin header** on the sensor so the Dupont plugs run flat along the wall.
-- The USB-C sockets are flush with the end face. Drop the board in and slide it toward the USB wall; a latch on the lid holds it in place.
+- The USB-C sockets are flush with the end face. The openings have a 1 mm 45° outer chamfer (`usb_chamfer`) to guide the plug and leave room for thicker plug housings. Drop the board in and slide it toward the USB wall; a latch on the lid holds it in place.
 - The lid hooks under the USB wall at the front and is fastened at the rear with 2× M3 countersunk screws.
 - Button labels: "b" = BOOT, "r" = RESET. Check the mapping against your board and swap `btn_labels` if needed.
 
@@ -38,5 +38,7 @@ openscad -D 'part="btn_b"'      -o button_b.stl             enclosure.scad
 openscad -D 'part="btn_r"'      -o button_r.stl             enclosure.scad
 openscad -D 'part="logo_inlay"' -o lid_logo_inlay.stl  enclosure.scad
 ```
+
+The renderings hide the board and sensor placeholders; set `show_electronics = true` to show them.
 
 Anthracite renderings: copy `views/anthracite.json` into OpenSCAD's `color-schemes/render/` folder and render with `--colorscheme=Anthracite --render`.
