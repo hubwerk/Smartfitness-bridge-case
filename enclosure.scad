@@ -24,9 +24,10 @@ $fn = 64;
 
 /* ---------- ESP32-S3 Board ---------- */
 esp_l = 63.5;  esp_w = 26.5;  esp_t = 1.6;
-esp_under = 20;   // Stiftleisten nach unten + Dupont-Stecker
+esp_under = 26;   // Stiftleisten nach unten + Dupont-Stecker + Platz zum Abknicken der Kabel
 esp_above = 8;
 esp_pin_keepout = 4.2;
+esp_mod_w = 18; esp_mod_h = 3.2;   // ESP32-S3-WROOM Modul (mittig, am hinteren Board-Ende)
 
 usb_y   = [-6.5, 6.5];  // USB-C Mitte relativ zur Platinenmitte
 usb_cw  = 8.94; usb_ch = 3.26; usb_ov = 0.8; usb_clr = 0.3;
@@ -63,7 +64,7 @@ lid_slot_len = 3.6; lid_slot_w = 1.6; lid_slot_n = 12; lid_slot_rot = -50;
 /* ---------- Deckel ---------- */
 lid_fit = 0.25;
 hook_w = 18; hook_d = 1.6; hook_t = 1.2;   // Haken vorn unter die USB-Wand
-corbel = 6; corbel_z = 23;                  // Schraubkonsolen hinten (über dem Board)
+corbel = 6; corbel_z = esp_under + 3;      // Schraubkonsolen hinten (über dem Board, das darunter durchgeschoben wird)
 screw_pilot = 2.5; screw_hole = 3.3; screw_head = 6.2;
 engrave = 0.6;
 logo_h  = 12;
@@ -155,8 +156,12 @@ module box() {
             }
             esp_supports();
             tof_mount();
-            for (y = [0, in_w - corbel]) translate([in_l - corbel, y, corbel_z])
-                cube([corbel, corbel, in_h - corbel_z]);
+            // Konsole -y: abgestuft, damit das Modul beim Einschieben darunter durchpasst
+            corbel_low_w = esp_c - esp_mod_w/2 - 0.25;
+            mod_top = esp_under + esp_t + esp_mod_h + 0.4;
+            translate([in_l - corbel, 0, corbel_z]) cube([corbel, corbel_low_w, in_h - corbel_z]);
+            translate([in_l - corbel, 0, mod_top]) cube([corbel, corbel, in_h - mod_top]);
+            translate([in_l - corbel, in_w - corbel, corbel_z]) cube([corbel, corbel, in_h - corbel_z]);
         }
         usb_cutouts();
         tof_window();
@@ -304,7 +309,7 @@ module electronics() {
     wire_cols = ["#d62d20", "#222222", "#ffa700", "#0057e7", "#008744", "#eeeeee"];
     // ESP32-S3 Board
     color("#1d1d1d") translate([board_x0, esp_y0, esp_under]) cube([esp_l, esp_w, esp_t]);
-    color("#2a2a2a") translate([x_e - 26, esp_c - 9, esp_under + esp_t]) cube([25.5, 18, 0.8]);
+    color("#2a2a2a") translate([x_e - 26, esp_c - 9, esp_under + esp_t]) cube([25.5, esp_mod_w, 0.8]);
     color("#c9ccce") translate([x_e - 26 + 0.7, esp_c - 8.3, esp_under + esp_t + 0.8]) cube([18, 16.6, 2.4]);
     for (dy = usb_y) color("#b8bcc0")
         translate([board_x0 - usb_ov, esp_c + dy, esp_under + esp_t + usb_ch/2]) rotate([0, 90, 0]) rotate([0, 0, 90])

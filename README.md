@@ -4,7 +4,7 @@ Case for the Freenove ESP32-S3 dev board with a TOF sensor: a 3D-printable Bauha
 
 ![Overview](views/overview.png)
 
-Outer dimensions: **71.2 × 38.9 × 34 mm**
+Outer dimensions: **71.2 × 38.9 × 40 mm**
 
 ## Files
 
@@ -29,6 +29,7 @@ Open, exploded and sectioned views with simplified placeholders for the board, t
 - The sensor sits upright in the middle of the long side, its lens cap flush with the outside. Use a **right-angle pin header** on the sensor so the Dupont plugs run flat along the wall.
 - The USB-C sockets are flush with the end face. The openings have a 1 mm 45° outer chamfer (`usb_chamfer`) to guide the plug and leave room for thicker plug housings. Drop the board in and slide it toward the USB wall; a latch on the lid holds it in place.
 - The lid hooks under the USB wall at the front and is fastened at the rear with 2× M3 countersunk screws.
+- 26 mm clearance under the board (`esp_under`): straight Dupont sockets on all 2 × 20 pins fit, with about 9.5 mm below them for the wires to bend inward. The free channel between the pin rows is about 20 mm wide.
 - On the lid, the vent slot rows continue the LED lines and the logo sits on the board axis between them, in line with the buttons.
 - Logo, lettering and button labels read correctly when looking at the case from the sensor side (`read_rot`).
 - Button labels: "b" = BOOT, "r" = RESET. Check the mapping against your board and swap `btn_labels` if needed.
