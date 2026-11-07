@@ -126,7 +126,9 @@ module logo2d(h = logo_h) {
 }
 // Breite der Gruppe = brand_w, zentriert um [0,0]
 brand_w = 44;
-module brand2d() {
+// Leserichtung: von der Sensorseite (+y) aus lesbar
+read_rot = 180;
+module brand2d() rotate(read_rot) {
     tw = brand_w - logo_h*1.06 - 3;
     translate([-brand_w/2, -logo_h/2]) {
         logo2d();
@@ -256,7 +258,7 @@ module button(label = "") difference() {
   }
   // Beschriftung vertieft in der Oberseite (z=0 = sichtbare Fläche)
   translate([0, 0, -0.01]) mirror([0, 1, 0]) linear_extrude(btn_label_dep + 0.01)
-    text(label, font = font_b, size = btn_d*0.6, halign = "center", valign = "center");
+    rotate(-read_rot) text(label, font = font_b, size = btn_d*0.6, halign = "center", valign = "center");
 }
 
 /* ================= Ausgabe ================= */

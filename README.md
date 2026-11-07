@@ -23,6 +23,7 @@ Outer dimensions: **71.2 × 38.9 × 34 mm**
 - The sensor sits upright in the middle of the long side, its lens cap flush with the outside. Use a **right-angle pin header** on the sensor so the Dupont plugs run flat along the wall.
 - The USB-C sockets are flush with the end face. The openings have a 1 mm 45° outer chamfer (`usb_chamfer`) to guide the plug and leave room for thicker plug housings. Drop the board in and slide it toward the USB wall; a latch on the lid holds it in place.
 - The lid hooks under the USB wall at the front and is fastened at the rear with 2× M3 countersunk screws.
+- Logo, lettering and button labels read correctly when looking at the case from the sensor side (`read_rot`).
 - Button labels: "b" = BOOT, "r" = RESET. Check the mapping against your board and swap `btn_labels` if needed.
 
 ## Measure before printing
