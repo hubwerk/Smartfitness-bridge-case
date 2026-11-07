@@ -18,6 +18,12 @@ Outer dimensions: **71.2 × 38.9 × 34 mm**
 | `lid_logo_inlay.stl` | Optional inlay for multi-color printing (0.6 mm) |
 | `views/` | Renderings from all directions |
 
+## Renderings with electronics
+
+![Electronics overview](views/electronics/overview.png)
+
+Open, exploded and sectioned views with simplified placeholders for the board, the TOF400C (upright, right-angle header) and the Dupont plugs are in `views/electronics/`.
+
 ## Design
 
 - The sensor sits upright in the middle of the long side, its lens cap flush with the outside. Use a **right-angle pin header** on the sensor so the Dupont plugs run flat along the wall.
@@ -41,6 +47,6 @@ openscad -D 'part="btn_r"'      -o button_r.stl             enclosure.scad
 openscad -D 'part="logo_inlay"' -o lid_logo_inlay.stl  enclosure.scad
 ```
 
-The renderings hide the board and sensor placeholders; set `show_electronics = true` to show them.
+The renderings hide the board and sensor placeholders; set `show_electronics = true` to show them. `lid_lift` (exploded view, `-1` hides the lid) and `cut` (`"xz"` / `"yz"` section) are only used for renderings.
 
 Anthracite renderings: copy `views/anthracite.json` into OpenSCAD's `color-schemes/render/` folder and render with `--colorscheme=Anthracite --render`.

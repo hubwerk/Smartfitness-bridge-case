@@ -275,22 +275,68 @@ else if (part == "logo_inlay")  // für Mehrfarbdruck: passt genau in die Vertie
     rotate([180, 0, 0]) translate([0, 0, -top_z]) translate([brand_c[0], brand_c[1], top_z - engrave]) linear_extrude(engrave) brand2d();
 else if (part == "btn_b") button(btn_labels[0]);
 else if (part == "btn_r") button(btn_labels[1]);
-else if (part == "assembly") color(anthracite) to_bed() {
-    box();
-    lid_assembled();
-    for (i = [0:len(buttons) - 1])
-        translate([bx(buttons[i]), by(buttons[i]), top_z + btn_proud]) rotate([180, 0, 0]) button(btn_labels[i]);
-    if (show_electronics) {
-    translate([board_x0, esp_y0, esp_under]) cube([esp_l, esp_w, esp_t]);
-    for (dy = usb_y)
-        translate([board_x0 - usb_ov, esp_c + dy - usb_cw/2, esp_under + esp_t]) cube([7.3, usb_cw, usb_ch]);
-    {
+else if (part == "assembly") to_bed() view_cut() {
+    color(anthracite) {
+        box();
+        if (lid_lift >= 0) translate([0, 0, lid_lift]) {
+            lid_assembled();
+            for (i = [0:len(buttons) - 1])
+                translate([bx(buttons[i]), by(buttons[i]), top_z + btn_proud + lid_lift*0.6])
+                    rotate([180, 0, 0]) button(btn_labels[i]);
+        }
+    }
+    if (show_electronics) electronics();
+}
+
+/* ---------- Visualisierung (nur Renderings) ---------- */
+lid_lift = 0;          // Deckel anheben (Explosionsansicht); < 0 = Deckel ausblenden
+cut = "none";          // "none" | "xz" (Schnitt längs durch die Board-Achse) | "yz" (quer durch den Sensor)
+
+module view_cut() {
+    if (cut == "xz") difference() { children(); color("#d0452f") translate([-50, esp_c, -50]) cube([200, 100, 200]); }
+    else if (cut == "yz") difference() { children(); color("#d0452f") translate([cap_x - 200, -50, -50]) cube([200, 200, 200]); }
+    else children();
+}
+
+module electronics() {
+    pin_n = 20; pin_p = 2.54; row_off = 1.82;
+    px0 = board_x0 + (esp_l - (pin_n - 1)*pin_p)/2;
+    wire_cols = ["#d62d20", "#222222", "#ffa700", "#0057e7", "#008744", "#eeeeee"];
+    // ESP32-S3 Board
+    color("#1d1d1d") translate([board_x0, esp_y0, esp_under]) cube([esp_l, esp_w, esp_t]);
+    color("#2a2a2a") translate([x_e - 26, esp_c - 9, esp_under + esp_t]) cube([25.5, 18, 0.8]);
+    color("#c9ccce") translate([x_e - 26 + 0.7, esp_c - 8.3, esp_under + esp_t + 0.8]) cube([18, 16.6, 2.4]);
+    for (dy = usb_y) color("#b8bcc0")
+        translate([board_x0 - usb_ov, esp_c + dy, esp_under + esp_t + usb_ch/2]) rotate([0, 90, 0]) rotate([0, 0, 90])
+            linear_extrude(7.3) stadium(usb_cw, usb_ch);
+    for (b = buttons) {
+        color("#d8d8d8") translate([bx(b) - 2, by(b) - 1.5, esp_under + esp_t]) cube([4, 3, 1.2]);
+        color("#333") translate([bx(b), by(b), esp_under + esp_t]) cylinder(d = 1.6, h = btn_h);
+    }
+    for (i = [0:len(leds) - 1]) color(i == 0 ? "#ff3030" : "#30ff60")
+        translate([bx(leds[i]) - 0.8, by(leds[i]) - 0.4, esp_under + esp_t]) cube([1.6, 0.8, 0.6]);
+    // Stiftleisten + Dupont-Buchsen unter dem Board
+    for (y = [esp_y0 + row_off, esp_y0 + esp_w - row_off], i = [0:pin_n - 1]) {
+        color("#111") translate([px0 + i*pin_p - 1.25, y - 1.25, esp_under - 2.5]) cube([2.5, 2.5, 2.5]);
+        color("#111") translate([px0 + i*pin_p - 1.2, y - 1.2, esp_under - 2.5 - 14]) cube([2.4, 2.4, 14]);
+        color(wire_cols[i % len(wire_cols)]) translate([px0 + i*pin_p, y, 1.5]) cylinder(d = 1.3, h = esp_under - 2.5 - 14 - 1.5 + 0.1, $fn = 12);
+    }
+    // TOF400C (hochkant)
+    color("#1565c0") {
         translate([sx0 + tof_strip, y_b, sz0]) cube([tof_wid - tof_strip, tof_t, tof_len]);
         translate([sx0, y_b, sz0 + tof_strip_v[0]]) cube([tof_strip, tof_t, tof_strip_v[1] - tof_strip_v[0]]);
-        translate([cap_x, y_c, cap_z]) rotate([-90, 0, 0]) linear_extrude(cap_h) rotate(90) stadium(cap_w, cap_hh);
     }
-    // Dupont-Stecker des Sensors (Platzhalter)
-    translate([sx0 - tof_plug_len, y_b - tof_plug, sz0 + tof_strip_v[0]])
-        cube([tof_plug_len, tof_plug - 0.5, tof_strip_v[1] - tof_strip_v[0]]);
+    color("#0b0b0b") translate([cap_x, y_c, cap_z]) rotate([-90, 0, 0]) linear_extrude(cap_h) rotate(90) stadium(cap_w, cap_hh);
+    // gewinkelte Stiftleiste + Dupont-Stecker + Kabel
+    n_tof = 6;
+    for (j = [0:n_tof - 1]) {
+        z = sz0 + tof_strip_v[0] + 1.27 + j*2.54;
+        color("#d4af37") {
+            translate([sx0 + 1.75 - 0.3, y_b - 2.5, z - 0.3]) cube([0.6, 2.5 + tof_t + 0.5, 0.6]);
+            translate([sx0 - 6, y_b - 2.5 - 0.3, z - 0.3]) cube([6 + 1.75 + 0.3, 0.6, 0.6]);
+        }
+        color("#111") translate([sx0 - 1 - 14, y_b - 2.5 - 1.2, z - 1.2]) cube([14, 2.4, 2.4]);
+        color(wire_cols[j]) translate([sx0 - 15, y_b - 2.5, z]) rotate([0, -90, 0]) cylinder(d = 1.3, h = tof_plug_len - 15, $fn = 12);
     }
+    color("#111") translate([sx0 - 1.5, y_b - 2.5 - 1.25, sz0 + tof_strip_v[0]]) cube([1.5, 2.5, tof_strip_v[1] - tof_strip_v[0]]);
 }
