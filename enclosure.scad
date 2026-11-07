@@ -58,7 +58,7 @@ eye_d = 18; eye_dep = 0.8;
 /* ---------- Lüftung ---------- */
 side_slots = [18, 15, 12];
 slot_w = 2.2; slot_angle = 22;
-lid_slot_len = 4.5; lid_slot_pitch = 3.6;
+lid_slot_len = 3.6; lid_slot_w = 1.6; lid_slot_n = 12; lid_slot_rot = -50;
 
 /* ---------- Deckel ---------- */
 lid_fit = 0.25;
@@ -125,7 +125,6 @@ module logo2d(h = logo_h) {
     }
 }
 // Breite der Gruppe = brand_w, zentriert um [0,0]
-brand_w = 44;
 // Leserichtung: von der Sensorseite (+y) aus lesbar
 read_rot = 180;
 module brand2d() rotate(read_rot) {
@@ -138,7 +137,13 @@ module brand2d() rotate(read_rot) {
             text(subtitle, font = font_r, size = 2.6, spacing = 1.9);
     }
 }
-brand_c = [(in_l + 18)/2 + 0.5, yc];
+// Deckel-Layout: Schlitzreihen auf den LED-Linien, Schriftzug auf der Board-Achse dazwischen
+slot_hx = lid_slot_len/2*cos(lid_slot_rot) + lid_slot_w/2*abs(sin(lid_slot_rot));
+slot_x0 = bx(leds[0]) + led_d/2 + 0.7 + slot_hx;
+slot_x1 = x_e - 1.5 - 1.25 - 1.5 - slot_hx;   // vor den hinteren Niederhalter-Stiften
+lid_slot_pitch = (slot_x1 - slot_x0)/(lid_slot_n - 1);
+brand_w = slot_x1 - slot_x0 + 2*slot_hx;
+brand_c = [(slot_x0 + slot_x1)/2, esp_c];
 
 /* ================= Unterteil ================= */
 module box() {
@@ -242,9 +247,9 @@ module lid_assembled() {
         // Logo + Schriftzug vertieft (optional farbig füllen)
         translate([brand_c[0], brand_c[1], top_z - engrave]) linear_extrude(engrave + 1) brand2d();
         // sportliche Lüftungsschlitze, symmetrisch über/unter dem Schriftzug, zeigen nach vorn
-        mirror_y() for (i = [0:floor((brand_w - 5)/lid_slot_pitch)])
-            translate([brand_c[0] - brand_w/2 + 1 + i*lid_slot_pitch, yc - logo_h/2 - 4.6, in_h - 1])
-            rotate([0, 0, -50]) linear_extrude(lid_t + 2) stadium(lid_slot_len, 1.6);
+        for (l = leds, i = [0:lid_slot_n - 1])
+            translate([slot_x0 + i*lid_slot_pitch, by(l), in_h - 1])
+            rotate([0, 0, sign(l[1])*lid_slot_rot]) linear_extrude(lid_t + 2) stadium(lid_slot_len, lid_slot_w);
     }
 }
 
