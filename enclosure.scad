@@ -24,7 +24,7 @@ $fn = 64;
 
 /* ---------- ESP32-S3 Board ---------- */
 esp_l = 63.5;  esp_w = 26.5;  esp_t = 1.6;
-esp_under = 26;   // Stiftleisten nach unten + Dupont-Stecker + Platz zum Abknicken der Kabel
+esp_under = 22;   // Stiftleisten nach unten + Dupont-Stecker + 5,5 mm zum Abknicken der Kabel
 esp_above = 8;
 esp_pin_keepout = 4.2;
 esp_mod_w = 18; esp_mod_h = 3.2;   // ESP32-S3-WROOM Modul (mittig, am hinteren Board-Ende)
