@@ -24,7 +24,11 @@ edge_ch  = 0.6;
 $fn = 64;
 
 /* ---------- ESP32-S3 Board ---------- */
-esp_l = 63.5;  esp_w = 26.5;  esp_t = 1.6;
+// Freenove-Angabe: 57,2 × 28,2 × 15 mm (Länge inkl. USB-Überstand, Höhe inkl. Stiftleisten)
+esp_size = [57.2, 28.2, 15];
+esp_t = 1.6;
+esp_w = esp_size[1];
+esp_pin_rows = 25.4;   // Abstand der Stiftleistenreihen (angenommen, nachmessen)
 esp_under = 22;   // Stiftleisten nach unten + Dupont-Stecker + 5,5 mm zum Abknicken der Kabel
 esp_above = 8;
 esp_pin_keepout = 4.2;
@@ -36,6 +40,7 @@ ant_gap   = 0.8;   // Luft hinter dem Board beim Einlegen (Board um `slide` zur�
 
 usb_y   = [-6.5, 6.5];  // USB-C Mitte relativ zur Platinenmitte
 usb_cw  = 8.94; usb_ch = 3.26; usb_ov = 0.8; usb_clr = 0.3;
+esp_l = esp_size[0] - usb_ov;   // Platinenlänge (Gesamtlänge minus USB-Überstand)
 usb_chamfer = 1.0;   // 45°-Fase außen um die USB-Öffnungen (Einführhilfe, Platz für dicke Stecker)
 
 // Taster / LEDs: [x ab USB-Platinenkante, y ab Platinenmitte (+ = Sensorseite)]
@@ -57,7 +62,7 @@ cap_w  = 12.4; cap_hh = 9.6; cap_h = 2.5; cap_clr = 0.25;
 cap_u  = 7.75;   // Kappenmitte ab Stiftleisten-Kante
 cap_v  = 9.5;    // Kappenmitte ab Unterkante
 tof_plug = 4.5;  // Tiefe gewinkelte Stiftleiste + Dupont hinter der Platine
-tof_plug_len = 22; // Länge Stecker nach vorn ab Platinenkante
+tof_plug_len = 18; // Länge Stecker nach vorn ab Platinenkante (Kabel direkt hinter dem Stecker nach unten abknicken)
 tof_margin = 1.0;
 eye_d = 18; eye_dep = 0.8;
 
@@ -95,18 +100,21 @@ out_y0 = -wall;     out_y1 = in_w + wall;
 yc = in_w/2;
 esp_c = esp_y0 + esp_w/2;
 
-cap_x = (out_x0 + out_x1)/2;
+// Antennenbereich
+ant_x1 = x_e - 0.5;  ant_x0 = ant_x1 - ant_len;
+
+// Sensor mittig, aber höchstens so weit Richtung Antenne, dass ant_clear eingehalten wird
+cap_x = min((out_x0 + out_x1)/2, ant_x0 - ant_clear - tof_wid + cap_u);
 cap_z = (top_z - floor_t)/2;
 sx0 = cap_x - cap_u;          // Stiftleisten-Kante (vorn)
 sz0 = cap_z - cap_v;          // Platinen-Unterkante
 y_c = in_w + wall - cap_h;    // Platinen-Vorderseite -> Kappe bündig außen
 y_b = y_c - tof_t;
 
-// Antennenbereich und Stiftleisten
-ant_x1 = x_e - 0.5;  ant_x0 = ant_x1 - ant_len;
+// Stiftleisten
 ant_y0 = esp_c - esp_mod_w/2;  ant_y1 = esp_c + esp_mod_w/2;
 ant_z0 = esp_under + esp_t;
-pin_n = 20; pin_p = 2.54; row_off = 1.82;
+pin_n = 20; pin_p = 2.54; row_off = (esp_w - esp_pin_rows)/2;
 px0 = board_x0 + (esp_l - (pin_n - 1)*pin_p)/2;
 // nutzbare Pins je Reihe ab USB-Ende: Dupont-Stecker (2,4 mm) mindestens ant_clear vor der Antenne
 pins_ok = floor((ant_x0 - ant_clear - 1.2 - px0)/pin_p) + 1;
@@ -371,7 +379,11 @@ module electronics() {
             translate([sx0 - 6, y_b - 2.5 - 0.3, z - 0.3]) cube([6 + 1.75 + 0.3, 0.6, 0.6]);
         }
         color("#111") translate([sx0 - 1 - 14, y_b - 2.5 - 1.2, z - 1.2]) cube([14, 2.4, 2.4]);
-        color(wire_cols[j]) translate([sx0 - 15, y_b - 2.5, z]) rotate([0, -90, 0]) cylinder(d = 1.3, h = tof_plug_len - 15, $fn = 12);
+        color(wire_cols[j]) {
+            wx = sx0 - 16.2 - j*0.0;
+            translate([sx0 - 15.01, y_b - 2.5, z]) rotate([0, -90, 0]) cylinder(d = 1.3, h = 1.2 + 0.01, $fn = 12);
+            translate([wx, y_b - 2.5, 1.5]) cylinder(d = 1.3, h = z - 1.5, $fn = 12);
+        }
     }
     color("#111") translate([sx0 - 1.5, y_b - 2.5 - 1.25, sz0 + tof_strip_v[0]]) cube([1.5, 2.5, tof_strip_v[1] - tof_strip_v[0]]);
 }
