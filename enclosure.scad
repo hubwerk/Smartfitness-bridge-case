@@ -10,6 +10,7 @@
 // part = "box" | "lid" | "btn_b" | "btn_r" | "logo_inlay" | "assembly"
 part = "assembly";
 show_electronics = false;  // Board/Sensor-Platzhalter in der Baugruppe anzeigen
+show_ant_zone = false;     // Antennen-Freiraum (ant_clear) transparent anzeigen
 
 include <logo_smartfitness.scad>
 
@@ -27,7 +28,11 @@ esp_l = 63.5;  esp_w = 26.5;  esp_t = 1.6;
 esp_under = 22;   // Stiftleisten nach unten + Dupont-Stecker + 5,5 mm zum Abknicken der Kabel
 esp_above = 8;
 esp_pin_keepout = 4.2;
-esp_mod_w = 18; esp_mod_h = 3.2;   // ESP32-S3-WROOM Modul (mittig, am hinteren Board-Ende)
+esp_mod_w = 18; esp_mod_h = 3.2;
+// Antenne (PCB-Antenne am Modulende, gegenüber USB): Freiraum ohne Schrauben/Metall/Kabel
+ant_len   = 6.4;   // Länge Antennenbereich am Modulende (ESP32-S3-WROOM-1, nachmessen)
+ant_clear = 15;    // gewünschter Freiraum rund um die Antenne
+ant_gap   = 0.8;   // Luft hinter dem Board beim Einlegen (Board um `slide` zurückgeschoben)   // ESP32-S3-WROOM Modul (mittig, am hinteren Board-Ende)
 
 usb_y   = [-6.5, 6.5];  // USB-C Mitte relativ zur Platinenmitte
 usb_cw  = 8.94; usb_ch = 3.26; usb_ov = 0.8; usb_clr = 0.3;
@@ -64,8 +69,8 @@ lid_slot_len = 3.6; lid_slot_w = 1.6; lid_slot_n = 12; lid_slot_rot = -50;
 /* ---------- Deckel ---------- */
 lid_fit = 0.25;
 hook_w = 18; hook_d = 1.6; hook_t = 1.2;   // Haken vorn unter die USB-Wand
-corbel = 6; corbel_z = esp_under + 3;      // Schraubkonsolen hinten (über dem Board, das darunter durchgeschoben wird)
-screw_pilot = 2.5; screw_hole = 3.3; screw_head = 6.2;
+// Deckel-Rasthaken in den Seitenwänden (statt Schrauben, außerhalb des Antennen-Freiraums)
+snap_w = 8; snap_t = 1.2; snap_len = 6; snap_nub = 0.5; snap_gap = 0.2;
 engrave = 0.6;
 logo_h  = 12;
 title   = "SmartFitness";
@@ -83,7 +88,7 @@ x_e   = board_x0 + esp_l;
 slide = usb_wall + 0.4;
 esp_y0 = clr;
 in_w = esp_y0 + esp_w + clr + tof_margin + tof_plug + tof_t + (cap_h - wall);
-in_l = x_e + slide + 1.5;
+in_l = x_e + slide + ant_gap;
 top_z = in_h + lid_t;
 out_x0 = -usb_wall; out_x1 = in_l + wall;
 out_y0 = -wall;     out_y1 = in_w + wall;
@@ -97,11 +102,29 @@ sz0 = cap_z - cap_v;          // Platinen-Unterkante
 y_c = in_w + wall - cap_h;    // Platinen-Vorderseite -> Kappe bündig außen
 y_b = y_c - tof_t;
 
+// Antennenbereich und Stiftleisten
+ant_x1 = x_e - 0.5;  ant_x0 = ant_x1 - ant_len;
+ant_y0 = esp_c - esp_mod_w/2;  ant_y1 = esp_c + esp_mod_w/2;
+ant_z0 = esp_under + esp_t;
+pin_n = 20; pin_p = 2.54; row_off = 1.82;
+px0 = board_x0 + (esp_l - (pin_n - 1)*pin_p)/2;
+// nutzbare Pins je Reihe ab USB-Ende: Dupont-Stecker (2,4 mm) mindestens ant_clear vor der Antenne
+pins_ok = floor((ant_x0 - ant_clear - 1.2 - px0)/pin_p) + 1;
+snap_x = sx0 + tof_wid + 2 + snap_w/2;       // hinter der Sensorplatine
+snap_z0 = in_h - snap_len + 1;               // Unterkante Rastnase
+
 function bx(p) = board_x0 + p[0];
 function by(p) = esp_c + p[1];
 
 echo(str("Außenmaß: ", out_x1 - out_x0, " x ", out_y1 - out_y0, " x ", top_z + floor_t, " mm"));
 assert(sx0 - tof_plug_len > 0, "Sensorstecker ragen in die USB-Wand");
+// Abstände von Metall/Kabeln zum Antennenbereich
+ant_d = [["USB-Buchsen", ant_x0 - (board_x0 - usb_ov + 7.3)],
+         ["TOF-Platine", ant_x0 - (sx0 + tof_wid)],
+         ["letzter Dupont-Stecker", ant_x0 - (px0 + (pins_ok - 1)*pin_p + 1.2)]];
+echo(str("Antenne: x ", ant_x0, "..", ant_x1, ", Abstand zur Außenwand ", out_x1 - ant_x1, " mm; nutzbare Pins je Reihe ab USB: ", pins_ok, " von ", pin_n));
+for (d = ant_d) echo(str("Abstand Antenne – ", d[0], ": ", d[1], " mm"));
+for (d = ant_d) assert(d[1] >= ant_clear, str(d[0], " zu nah an der Antenne"));
 
 /* ---------- Grundformen ---------- */
 module ch_box(x0, x1, y0, y1, z0, z1, c) hull() {
@@ -156,12 +179,6 @@ module box() {
             }
             esp_supports();
             tof_mount();
-            // Konsole -y: abgestuft, damit das Modul beim Einschieben darunter durchpasst
-            corbel_low_w = esp_c - esp_mod_w/2 - 0.25;
-            mod_top = esp_under + esp_t + esp_mod_h + 0.4;
-            translate([in_l - corbel, 0, corbel_z]) cube([corbel, corbel_low_w, in_h - corbel_z]);
-            translate([in_l - corbel, 0, mod_top]) cube([corbel, corbel, in_h - mod_top]);
-            translate([in_l - corbel, in_w - corbel, corbel_z]) cube([corbel, corbel, in_h - corbel_z]);
         }
         usb_cutouts();
         tof_window();
@@ -169,8 +186,9 @@ module box() {
         mirror_y() { eye_ring(); side_vents(); }
         // Hakenschlitz vorn
         translate([-hook_d - 0.3, yc - hook_w/2 - 0.3, in_h - 0.1]) cube([hook_d + 0.31, hook_w + 0.6, hook_t + 0.3]);
-        for (y = [corbel/2, in_w - corbel/2]) translate([in_l - corbel/2, y, corbel_z + 0.5])
-            cylinder(d = screw_pilot, h = in_h);
+        // Rastfenster für die Deckel-Rasthaken (durchgehend: mit Stift entriegelbar)
+        for (y = [-wall - 1, in_w - 0.01]) translate([snap_x - snap_w/2 - 0.3, y, snap_z0 - 0.2])
+            cube([snap_w + 0.6, wall + 1.01, 2.4]);
     }
 }
 
@@ -178,9 +196,10 @@ module esp_supports() {
     sw = esp_w - 2*esp_pin_keepout;
     yb = esp_y0 + esp_pin_keepout;
     translate([0, yb, 0]) cube([4, sw, esp_under]);
-    translate([x_e - 5, yb, 0]) cube([5 + slide + 0.5, sw, esp_under]);
+    // hintere Stütze vor dem Antennenbereich (Antenne frei, Board kragt aus)
+    translate([ant_x0 - 6, yb, 0]) cube([5, sw, esp_under]);
     // Führung Sensorseite (vorn übernimmt die Wand -y)
-    translate([x_e - 5, esp_y0 + esp_w + clr, 0]) cube([4, 1.5, esp_under + esp_t + 1]);
+    translate([ant_x0 - 6, esp_y0 + esp_w + clr, 0]) cube([4, 1.5, esp_under + esp_t + 1]);
 }
 
 module usb_cutouts() {
@@ -227,8 +246,15 @@ module lid_assembled() {
             translate([-hook_d, yc - hook_w/2, in_h]) cube([hook_d + lid_fit + 0.01, hook_w, hook_t]);
             for (x = [2, x_e - 1.5], y = [esp_y0 + 1.2, esp_y0 + esp_w - 1.2])
                 translate([x, y, esp_under + esp_t + 0.2]) cylinder(d = 2.5, h = esp_above);
-            // Riegel hinter dem Platinenende
-            translate([x_e + 0.2, esp_c - 7, esp_under + 0.3]) cube([slide - 0.4, 14, in_h - esp_under]);
+            // Riegel hinter dem Platinenende, nur an den Ecken (Antennenbereich frei)
+            for (y = [[esp_y0, ant_y0 - 0.5], [ant_y1 + 0.5, esp_y0 + esp_w]])
+                translate([x_e + 0.2, y[0], esp_under + 0.3]) cube([slide - 0.4, y[1] - y[0], in_h - esp_under]);
+            // Rasthaken in die Seitenwände
+            for (m = [0, 1]) translate([0, m*in_w, 0]) mirror([0, m, 0]) {
+                translate([snap_x - snap_w/2, snap_gap, in_h - snap_len]) cube([snap_w, snap_t, snap_len + 0.01]);
+                translate([snap_x - snap_w/2, snap_gap, 0]) rotate([90, 0, 90]) linear_extrude(snap_w)
+                    polygon([[0, snap_z0], [-snap_gap - snap_nub, snap_z0 + 0.7], [-snap_gap - snap_nub, snap_z0 + 1.3], [0, snap_z0 + 2.0]]);
+            }
             // Federzunge drückt den Sensor in die Öffnung
             hull() {
                 translate([sx0 + tof_strip + 1, y_b - 2.15, sz0 + tof_len - 7]) cube([tof_wid - tof_strip - 1.5, 1.2, 0.1]);
@@ -243,17 +269,13 @@ module lid_assembled() {
                 translate([lid_fit, lid_fit, 0]) cube([in_l, in_w - 2*lid_fit, in_h + 1]);
             }
         }
-        for (y = [corbel/2, in_w - corbel/2]) {
-            translate([in_l - corbel/2, y, in_h - 1]) cylinder(d = screw_hole, h = lid_t + 2);
-            translate([in_l - corbel/2, y, top_z - 1.6 + 0.01]) cylinder(d1 = screw_hole, d2 = screw_head, h = 1.6);
-        }
         for (b = buttons) translate([bx(b), by(b), in_h - 1]) cylinder(d = btn_d + 0.5, h = lid_t + 2);
         for (l = leds) translate([bx(l), by(l), in_h - 1]) cylinder(d = led_d, h = lid_t + 2);
         // Logo + Schriftzug vertieft (optional farbig füllen)
         translate([brand_c[0], brand_c[1], top_z - engrave]) linear_extrude(engrave + 1) brand2d();
         // sportliche Lüftungsschlitze, symmetrisch über/unter dem Schriftzug, zeigen nach vorn
         for (l = leds, i = [0:lid_slot_n - 1])
-            translate([slot_x0 + i*lid_slot_pitch, by(l), in_h - 1])
+            translate([slot_x0 + i*lid_slot_pitch, by(l), in_h - 0.01])
             rotate([0, 0, sign(l[1])*lid_slot_rot]) linear_extrude(lid_t + 2) stadium(lid_slot_len, lid_slot_w);
     }
 }
@@ -280,7 +302,15 @@ else if (part == "logo_inlay")  // für Mehrfarbdruck: passt genau in die Vertie
     rotate([180, 0, 0]) translate([0, 0, -top_z]) translate([brand_c[0], brand_c[1], top_z - engrave]) linear_extrude(engrave) brand2d();
 else if (part == "btn_b") button(btn_labels[0]);
 else if (part == "btn_r") button(btn_labels[1]);
-else if (part == "assembly") to_bed() view_cut() {
+else if (part == "assembly") to_bed() {
+  if (show_ant_zone) color([1, 0.85, 0, 0.3]) render() intersection() {
+    cube([in_l, in_w, in_h]);
+    minkowski() {
+        translate([ant_x0, ant_y0, ant_z0]) cube([ant_len, ant_y1 - ant_y0, 0.8]);
+        sphere(r = ant_clear, $fn = 24);
+    }
+  }
+  view_cut() {
     color(anthracite) {
         box();
         if (lid_lift >= 0) translate([0, 0, lid_lift]) {
@@ -291,6 +321,7 @@ else if (part == "assembly") to_bed() view_cut() {
         }
     }
     if (show_electronics) electronics();
+  }
 }
 
 /* ---------- Visualisierung (nur Renderings) ---------- */
@@ -304,8 +335,6 @@ module view_cut() {
 }
 
 module electronics() {
-    pin_n = 20; pin_p = 2.54; row_off = 1.82;
-    px0 = board_x0 + (esp_l - (pin_n - 1)*pin_p)/2;
     wire_cols = ["#d62d20", "#222222", "#ffa700", "#0057e7", "#008744", "#eeeeee"];
     // ESP32-S3 Board
     color("#1d1d1d") translate([board_x0, esp_y0, esp_under]) cube([esp_l, esp_w, esp_t]);
@@ -323,8 +352,9 @@ module electronics() {
     // Stiftleisten + Dupont-Buchsen unter dem Board
     for (y = [esp_y0 + row_off, esp_y0 + esp_w - row_off], i = [0:pin_n - 1]) {
         color("#111") translate([px0 + i*pin_p - 1.25, y - 1.25, esp_under - 2.5]) cube([2.5, 2.5, 2.5]);
-        color("#111") translate([px0 + i*pin_p - 1.2, y - 1.2, esp_under - 2.5 - 14]) cube([2.4, 2.4, 14]);
-        color(wire_cols[i % len(wire_cols)]) translate([px0 + i*pin_p, y, 1.5]) cylinder(d = 1.3, h = esp_under - 2.5 - 14 - 1.5 + 0.1, $fn = 12);
+        color("#c9a227") translate([px0 + i*pin_p - 0.32, y - 0.32, esp_under - 8.5]) cube([0.64, 0.64, 6]);
+        if (i < pins_ok) color("#111") translate([px0 + i*pin_p - 1.2, y - 1.2, esp_under - 2.5 - 14]) cube([2.4, 2.4, 14]);
+        if (i < pins_ok) color(wire_cols[i % len(wire_cols)]) translate([px0 + i*pin_p, y, 1.5]) cylinder(d = 1.3, h = esp_under - 2.5 - 14 - 1.5 + 0.1, $fn = 12);
     }
     // TOF400C (hochkant)
     color("#1565c0") {
