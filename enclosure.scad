@@ -159,14 +159,21 @@ module logo2d(h = logo_h) {
 // Breite der Gruppe = brand_w, zentriert um [0,0]
 // Leserichtung: von der Sensorseite (+y) aus lesbar
 read_rot = 180;
+// Gemessene Textgrenzen in x (Liberation Sans, OpenSCAD 2021): damit beide Zeilen exakt
+// gleich breit sind und bündig enden. title: size 5; subtitle: size 2.6 bei spacing 1 bzw. 2
+title_bb    = [0.2, 42.7704];
+subtitle_bb = [0.2962, 13.4216, 24.5899];
 module brand2d() rotate(read_rot) {
-    tw = brand_w - logo_h*1.06 - 3;
+    tx0 = logo_h*1.06 + 3;
+    tw = brand_w - tx0;
+    k = tw / (title_bb[1] - title_bb[0]);
+    sp = 1 + (tw + subtitle_bb[0] - subtitle_bb[1]) / (subtitle_bb[2] - subtitle_bb[1]);
     translate([-brand_w/2, -logo_h/2]) {
         logo2d();
-        translate([logo_h*1.06 + 3, logo_h*0.42])
-            resize([tw, 0], auto = true) text(title, font = font_b, size = 5, valign = "baseline");
-        translate([logo_h*1.06 + 3, logo_h*0.0])
-            text(subtitle, font = font_r, size = 2.6, spacing = 1.9);
+        translate([tx0 - title_bb[0]*k, logo_h*0.42])
+            scale(k) text(title, font = font_b, size = 5, valign = "baseline");
+        translate([tx0 - subtitle_bb[0], 0])
+            text(subtitle, font = font_r, size = 2.6, spacing = sp);
     }
 }
 // Deckel-Layout: Schlitzreihen auf den LED-Linien, Schriftzug auf der Board-Achse dazwischen
@@ -174,8 +181,11 @@ slot_hx = lid_slot_len/2*cos(lid_slot_rot) + lid_slot_w/2*abs(sin(lid_slot_rot))
 slot_x0 = bx(leds[0]) + led_d/2 + 0.7 + slot_hx;
 slot_x1 = x_e - 1.5 - 1.25 - 1.5 - slot_hx;   // vor den hinteren Niederhalter-Stiften
 lid_slot_pitch = (slot_x1 - slot_x0)/(lid_slot_n - 1);
-brand_w = slot_x1 - slot_x0 + 2*slot_hx;
-brand_c = [(slot_x0 + slot_x1)/2, esp_c];
+// Logo beginnt bündig mit dem Ende der Schlitzreihen, Schrift endet bündig mit der Außenkante der LED-Löcher
+brand_x0 = bx(leds[0]) - led_d/2;
+brand_x1 = slot_x1 + slot_hx;
+brand_w = brand_x1 - brand_x0;
+brand_c = [(brand_x0 + brand_x1)/2, esp_c];
 
 /* ================= Unterteil ================= */
 module box() {

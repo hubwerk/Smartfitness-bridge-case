@@ -33,6 +33,7 @@ Open, exploded and sectioned views with simplified placeholders for the board, t
 - The lid hooks under the USB wall at the front and snaps into both side walls with two plastic latches (no screws). The latch windows go through the wall, so a thin pin can release them.
 - 22 mm clearance under the board (`esp_under`): straight Dupont sockets fit, with about 5.5 mm below them for the wires to bend inward. The free channel between the pin rows is about 20 mm wide.
 - On the lid, the vent slot rows continue the LED lines and the logo sits on the board axis between them, in line with the buttons.
+- "SmartFitness" and "BRIDGE" have exactly the same width and end flush with the outer edge of the LED holes. The logo starts flush with the end of the vent slot rows.
 - Logo, lettering and button labels read correctly when looking at the case from the sensor side (`read_rot`).
 - Button labels: "b" = BOOT, "r" = RESET. Check the mapping against your board and swap `btn_labels` if needed.
 
