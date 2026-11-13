@@ -7,7 +7,7 @@
 // die Dupont-Stecker laufen flach an der Wand entlang nach vorn -> schmales Gehäuse.
 //
 // Alle Maße in mm. VOR DEM DRUCK nachmessen und unten anpassen!
-// part = "box" | "lid" | "btn_b" | "btn_r" | "logo_inlay" | "assembly"
+// part = "box" | "lid" | "btn_b" | "btn_r" | "assembly"
 part = "assembly";
 show_electronics = false;  // Board/Sensor-Platzhalter in der Baugruppe anzeigen
 show_ant_zone = false;     // Antennen-Freiraum (ant_clear) transparent anzeigen
@@ -77,7 +77,10 @@ hook_w = 18; hook_d = 1.6; hook_t = 1.2;   // Haken vorn unter die USB-Wand
 // Deckel-Rasthaken in den Seitenwänden (statt Schrauben, außerhalb des Antennen-Freiraums)
 snap_w = 8; snap_t = 1.2; snap_len = 6; snap_nub = 0.5; snap_gap = 0.2;
 engrave = 0.6;
-logo_h  = 12;
+logo_h  = 10.5;
+logo_gap = 2;     // Abstand Logo – Schrift
+text_th = 0.2;    // Schrift ringsum verdicken (kräftigere Linien, besser druckbar)
+line_gap = 1.0;   // Abstand zwischen den Schriftzeilen
 title   = "SmartFitness";
 subtitle = "BRIDGE";
 btn_labels = ["b", "r"];   // Kennzeichnung der Tasterkappen (gleiche Schriftart)
@@ -160,20 +163,26 @@ module logo2d(h = logo_h) {
 // Leserichtung: von der Sensorseite (+y) aus lesbar
 read_rot = 180;
 // Gemessene Textgrenzen in x (Liberation Sans, OpenSCAD 2021): damit beide Zeilen exakt
-// gleich breit sind und bündig enden. title: size 5; subtitle: size 2.6 bei spacing 1 bzw. 2
-title_bb    = [0.2, 42.7704];
-subtitle_bb = [0.2962, 13.4216, 24.5899];
+// gleich breit sind und bündig enden. title: Bold size 5 [x0, x1, y1];
+// subtitle: Bold size 3.4 [x0, x1 bei spacing 1, x1 bei spacing 2, y1]
+title_bb    = [0.2, 42.7704, 5.0317];
+subtitle_bb = [0.3159, 17.8242, 32.6833, 3.297];
 module brand2d() rotate(read_rot) {
-    tx0 = logo_h*1.06 + 3;
-    tw = brand_w - tx0;
+    tx0 = logo_h*1.06 + logo_gap;
+    tw = brand_w - tx0 - 2*text_th;          // Breite vor dem Verdicken
     k = tw / (title_bb[1] - title_bb[0]);
     sp = 1 + (tw + subtitle_bb[0] - subtitle_bb[1]) / (subtitle_bb[2] - subtitle_bb[1]);
+    sub_y = 0;
+    title_y = subtitle_bb[3] + 2*text_th + line_gap;
+    block_h = title_y + title_bb[2]*k;
     translate([-brand_w/2, -logo_h/2]) {
         logo2d();
-        translate([tx0 - title_bb[0]*k, logo_h*0.42])
-            scale(k) text(title, font = font_b, size = 5, valign = "baseline");
-        translate([tx0 - subtitle_bb[0], 0])
-            text(subtitle, font = font_r, size = 2.6, spacing = sp);
+        translate([0, (logo_h - block_h)/2]) offset(r = text_th, $fn = 16) {
+            translate([tx0 + text_th - title_bb[0]*k, title_y])
+                scale(k) text(title, font = font_b, size = 5, valign = "baseline");
+            translate([tx0 + text_th - subtitle_bb[0], sub_y])
+                text(subtitle, font = font_b, size = 3.4, spacing = sp);
+        }
     }
 }
 // Deckel-Layout: Schlitzreihen auf den LED-Linien, Schriftzug auf der Board-Achse dazwischen
@@ -316,8 +325,6 @@ module to_bed() translate([usb_wall, wall, floor_t]) children();
 
 if (part == "box") to_bed() box();
 else if (part == "lid") rotate([180, 0, 0]) translate([0, 0, -top_z]) lid_assembled();
-else if (part == "logo_inlay")  // für Mehrfarbdruck: passt genau in die Vertiefung des Deckels
-    rotate([180, 0, 0]) translate([0, 0, -top_z]) translate([brand_c[0], brand_c[1], top_z - engrave]) linear_extrude(engrave) brand2d();
 else if (part == "btn_b") button(btn_labels[0]);
 else if (part == "btn_r") button(btn_labels[1]);
 else if (part == "assembly") to_bed() {

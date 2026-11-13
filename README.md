@@ -15,9 +15,8 @@ Board size according to Freenove: **57.2 × 28.2 × 15 mm** (length including US
 | `enclosure.scad` | Parametric OpenSCAD model (all dimensions at the top of the file) |
 | `logo_smartfitness.scad` | Logo polygons taken from the web interface |
 | `enclosure_base.stl` | Base |
-| `enclosure_lid.stl` | Lid with engraved logo and "SmartFitness BRIDGE" lettering |
+| `enclosure_lid.stl` | Lid with engraved (0.6 mm recessed) logo and "SmartFitness BRIDGE" lettering in bold |
 | `button_b.stl`, `button_r.stl` | Button caps with recessed "b" / "r" labels |
-| `lid_logo_inlay.stl` | Optional inlay for multi-color printing (0.6 mm) |
 | `views/` | Renderings from all directions |
 
 ## Renderings with electronics
@@ -33,7 +32,7 @@ Open, exploded and sectioned views with simplified placeholders for the board, t
 - The lid hooks under the USB wall at the front and snaps into both side walls with two plastic latches (no screws). The latch windows go through the wall, so a thin pin can release them.
 - 22 mm clearance under the board (`esp_under`): straight Dupont sockets fit, with about 5.5 mm below them for the wires to bend inward. The free channel between the pin rows is about 20 mm wide.
 - On the lid, the vent slot rows continue the LED lines and the logo sits on the board axis between them, in line with the buttons.
-- "SmartFitness" and "BRIDGE" have exactly the same width and end flush with the outer edge of the LED holes. The logo starts flush with the end of the vent slot rows.
+- "SmartFitness" and "BRIDGE" are set in bold, thickened by 0.2 mm (`text_th`) for clean printing, have exactly the same width and end flush with the outer edge of the LED holes. The logo starts flush with the end of the vent slot rows.
 - Logo, lettering and button labels read correctly when looking at the case from the sensor side (`read_rot`).
 - Button labels: "b" = BOOT, "r" = RESET. Check the mapping against your board and swap `btn_labels` if needed.
 
@@ -62,7 +61,6 @@ openscad -D 'part="box"'        -o enclosure_base.stl   enclosure.scad
 openscad -D 'part="lid"'        -o enclosure_lid.stl      enclosure.scad
 openscad -D 'part="btn_b"'      -o button_b.stl             enclosure.scad
 openscad -D 'part="btn_r"'      -o button_r.stl             enclosure.scad
-openscad -D 'part="logo_inlay"' -o lid_logo_inlay.stl  enclosure.scad
 ```
 
 The renderings hide the board and sensor placeholders; set `show_electronics = true` to show them. `show_ant_zone` shows the antenna clearance zone. `lid_lift` (exploded view, `-1` hides the lid) and `cut` (`"xz"` / `"yz"` section) are only used for renderings.
