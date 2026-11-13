@@ -29,7 +29,7 @@ Open, exploded and sectioned views with simplified placeholders for the board, t
 ## Design
 
 - The sensor sits upright on the long side, its lens cap flush with the outside. It is centered except for a 0.65 mm shift toward the USB end, which keeps 15 mm clearance to the antenna. Use a **right-angle pin header** on the sensor so the Dupont plugs run flat along the wall, and bend the wires down right behind the plugs (18 mm from the sensor edge to the USB wall).
-- The USB-C sockets are flush with the end face. The openings have a 1 mm 45° outer chamfer (`usb_chamfer`) to guide the plug and leave room for thicker plug housings. Drop the board in and slide it toward the USB wall; a latch on the lid holds it in place.
+- The USB-C sockets are flush with the end face. The openings have 1.3 mm clearance around each socket (`usb_clr`, enlarged by 1 mm after the first test print; 1.46 mm web between them) and a 1 mm 45° outer chamfer (`usb_chamfer`) to guide the plug and leave room for thicker plug housings. Drop the board in and slide it toward the USB wall; a latch on the lid holds it in place.
 - The lid hooks under the USB wall at the front and snaps into both side walls with two plastic latches (no screws). The latch windows go through the wall, so a thin pin can release them.
 - 22 mm clearance under the board (`esp_under`): straight Dupont sockets fit, with about 5.5 mm below them for the wires to bend inward. The free channel between the pin rows is about 20 mm wide.
 - On the lid, the vent slot rows continue the LED lines and the logo sits on the board axis between them, in line with the buttons.

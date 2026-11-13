@@ -39,7 +39,7 @@ ant_clear = 15;    // gewünschter Freiraum rund um die Antenne
 ant_gap   = 0.8;   // Luft hinter dem Board beim Einlegen (Board um `slide` zurückgeschoben)   // ESP32-S3-WROOM Modul (mittig, am hinteren Board-Ende)
 
 usb_y   = [-6.5, 6.5];  // USB-C Mitte relativ zur Platinenmitte
-usb_cw  = 8.94; usb_ch = 3.26; usb_ov = 0.8; usb_clr = 0.3;
+usb_cw  = 8.94; usb_ch = 3.26; usb_ov = 0.8; usb_clr = 1.3;   // Luft ringsum (nach Testdruck +1 mm)
 esp_l = esp_size[0] - usb_ov;   // Platinenlänge (Gesamtlänge minus USB-Überstand)
 usb_chamfer = 1.0;   // 45°-Fase außen um die USB-Öffnungen (Einführhilfe, Platz für dicke Stecker)
 
